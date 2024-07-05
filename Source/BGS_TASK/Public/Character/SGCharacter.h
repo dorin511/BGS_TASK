@@ -6,24 +6,55 @@
 #include "GameFramework/Character.h"
 #include "SGCharacter.generated.h"
 
+class ASGSkateboard;
+class USpringArmComponent;
+class UCameraComponent;
+
 UCLASS()
 class BGS_TASK_API ASGCharacter : public ACharacter
 {
 	GENERATED_BODY()
 
 public:
-	// Sets default values for this character's properties
 	ASGCharacter();
 
+	virtual void Tick(float deltaTime) override;
+
+	virtual void SetupPlayerInputComponent(class UInputComponent* playerInputComponent) override;
+
+	bool IsMovingForwardPressed() const { return bIsMovingForwardPressed; }
+
+	void SetIsAccelerating(bool bValue) { bIsAccelerating = bValue; }
+
 protected:
-	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-public:	
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
+	void MoveForward(float amount);
+	void Turn(float amount);
 
-	// Called to bind functionality to input
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+	void UpdateMovementSpeed(float deltaTime);
 
+protected:
+	UPROPERTY(VisibleAnywhere)
+	USpringArmComponent* SpringArmComponent = nullptr;
+
+	UPROPERTY(VisibleAnywhere)
+	UCameraComponent* CameraComponent = nullptr;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Skateboard")
+	TSubclassOf<ASGSkateboard> SkateboardClass = nullptr;
+
+	UPROPERTY()
+	ASGSkateboard* Skateboard = nullptr;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Skateboard")
+	float AccelerationSpeed = 10.f;
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Skateboard")
+	float DeccelerationSpeed = .05f;
+
+	float CurrentAcceleration = 0.f;
+
+	bool bIsAccelerating = false;
+	bool bIsMovingForwardPressed = false;
 };

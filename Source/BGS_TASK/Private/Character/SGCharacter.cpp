@@ -2,33 +2,63 @@
 
 
 #include "Character/SGCharacter.h"
+#include "Skateboard/SGSkateboard.h"
+#include "GameFramework/SpringArmComponent.h"
+#include "Camera/CameraComponent.h"
+#include "GameFramework/PawnMovementComponent.h"
 
-// Sets default values
 ASGCharacter::ASGCharacter()
 {
- 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+	SpringArmComponent = CreateDefaultSubobject<USpringArmComponent>("SpringArmComponent");
+	SpringArmComponent->SetupAttachment(RootComponent);
+
+	CameraComponent = CreateDefaultSubobject<UCameraComponent>("CameraComponent");
+	CameraComponent->SetupAttachment(SpringArmComponent);
 }
 
-// Called when the game starts or when spawned
 void ASGCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	Skateboard = GetWorld()->SpawnActor<ASGSkateboard>(SkateboardClass, GetActorTransform());
+	//if (Skateboard) this->AttachToActor(Skateboard, FAttachmentTransformRules::KeepRelativeTransform);
 }
 
-// Called every frame
-void ASGCharacter::Tick(float DeltaTime)
+void ASGCharacter::Tick(float deltaTime)
 {
-	Super::Tick(DeltaTime);
+	Super::Tick(deltaTime);
 
+	UpdateMovementSpeed(deltaTime);
 }
 
-// Called to bind functionality to input
-void ASGCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
+void ASGCharacter::SetupPlayerInputComponent(UInputComponent* playerInputComponent)
 {
-	Super::SetupPlayerInputComponent(PlayerInputComponent);
+	Super::SetupPlayerInputComponent(playerInputComponent);
 
+	playerInputComponent->BindAxis("Forward", this, &ASGCharacter::MoveForward);
+	playerInputComponent->BindAxis("Turn", this, &ASGCharacter::Turn);
 }
 
+void ASGCharacter::MoveForward(float amount)
+{
+	bIsMovingForwardPressed = amount > 0;
+
+	GEngine->AddOnScreenDebugMessage(0, 2.f, FColor::Black, FString::Printf(TEXT("%d"), bIsMovingForwardPressed));
+}
+
+void ASGCharacter::Turn(float amount)
+{
+	AddControllerYawInput(amount);
+}
+
+void ASGCharacter::UpdateMovementSpeed(float deltaTime)
+{
+	CurrentAcceleration += bIsAccelerating ? AccelerationSpeed * deltaTime : -DeccelerationSpeed * deltaTime;
+
+	CurrentAcceleration = FMath::Clamp(CurrentAcceleration, 0.f, 1.f);
+
+	if (bIsAccelerating) bIsAccelerating = false;
+	AddMovementInput(GetActorForwardVector(), CurrentAcceleration);
+}
