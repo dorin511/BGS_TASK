@@ -2,7 +2,6 @@
 
 
 #include "Character/SGCharacter.h"
-#include "Skateboard/SGSkateboard.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/PawnMovementComponent.h"
@@ -16,14 +15,14 @@ ASGCharacter::ASGCharacter()
 
 	CameraComponent = CreateDefaultSubobject<UCameraComponent>("CameraComponent");
 	CameraComponent->SetupAttachment(SpringArmComponent);
+
+	SkateComponent = CreateDefaultSubobject<UStaticMeshComponent>("SkateComponent");
+	SkateComponent->SetupAttachment(GetMesh());
 }
 
 void ASGCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	
-	Skateboard = GetWorld()->SpawnActor<ASGSkateboard>(SkateboardClass, GetActorTransform());
-	//if (Skateboard) this->AttachToActor(Skateboard, FAttachmentTransformRules::KeepRelativeTransform);
 }
 
 void ASGCharacter::Tick(float deltaTime)
@@ -39,23 +38,47 @@ void ASGCharacter::SetupPlayerInputComponent(UInputComponent* playerInputCompone
 
 	playerInputComponent->BindAxis("Forward", this, &ASGCharacter::MoveForward);
 	playerInputComponent->BindAxis("Turn", this, &ASGCharacter::Turn);
+	playerInputComponent->BindAction("Jump", EInputEvent::IE_Pressed, this, &ASGCharacter::Jump);
 }
 
 void ASGCharacter::MoveForward(float amount)
 {
-	bIsMovingForwardPressed = amount > 0;
+	if (bIsJumping) return;
 
-	GEngine->AddOnScreenDebugMessage(0, 2.f, FColor::Black, FString::Printf(TEXT("%d"), bIsMovingForwardPressed));
+	bIsMovingForwardPressed = amount > 0;
+	bIsSlowingDown = amount < 0.f;
 }
 
 void ASGCharacter::Turn(float amount)
 {
+	if (bIsJumping) return;
+
 	AddControllerYawInput(amount);
+}
+
+void ASGCharacter::Jump()
+{
+	if (MinJumpSpeed > GetVelocity().Size() || bIsJumping) return;
+
+	bIsJumping = true;
+	bIsMovingForwardPressed = false;
+	bIsSlowingDown = false;
+
+	SkateComponent->AttachToComponent(GetMesh(), FAttachmentTransformRules::KeepRelativeTransform, JumpAttachSocketName);
+}
+
+void ASGCharacter::EndJumping()
+{
+	bIsJumping = false;
+	SkateComponent->AttachToComponent(GetMesh(), FAttachmentTransformRules::KeepRelativeTransform);
 }
 
 void ASGCharacter::UpdateMovementSpeed(float deltaTime)
 {
+	if (bIsSlowingDown) bIsAccelerating = false;
+
 	CurrentAcceleration += bIsAccelerating ? AccelerationSpeed * deltaTime : -DeccelerationSpeed * deltaTime;
+	if (bIsSlowingDown) CurrentAcceleration -= SlowDownSpeed * deltaTime;
 
 	CurrentAcceleration = FMath::Clamp(CurrentAcceleration, 0.f, 1.f);
 

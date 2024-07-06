@@ -32,7 +32,7 @@ protected:
 	float Speed = 0.f;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Movement")
-	bool bIsInAir = false;
+	bool bIsJumping = false;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Movement")
 	bool bIsMovingForwardPressed = false;

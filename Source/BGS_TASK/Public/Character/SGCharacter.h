@@ -26,11 +26,15 @@ public:
 
 	void SetIsAccelerating(bool bValue) { bIsAccelerating = bValue; }
 
+	bool IsJumping() const { return bIsJumping; }
+	void EndJumping();
+
 protected:
 	virtual void BeginPlay() override;
 
 	void MoveForward(float amount);
 	void Turn(float amount);
+	void Jump();
 
 	void UpdateMovementSpeed(float deltaTime);
 
@@ -41,11 +45,11 @@ protected:
 	UPROPERTY(VisibleAnywhere)
 	UCameraComponent* CameraComponent = nullptr;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Skateboard")
-	TSubclassOf<ASGSkateboard> SkateboardClass = nullptr;
+	UPROPERTY(VisibleAnywhere)
+	UStaticMeshComponent* SkateComponent = nullptr;
 
-	UPROPERTY()
-	ASGSkateboard* Skateboard = nullptr;
+	UPROPERTY(EditDefaultsOnly, Category = "Skateboard")
+	FName JumpAttachSocketName;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Skateboard")
 	float AccelerationSpeed = 10.f;
@@ -53,8 +57,16 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Skateboard")
 	float DeccelerationSpeed = .05f;
 
+	UPROPERTY(EditDefaultsOnly, Category = "Skateboard")
+	float SlowDownSpeed = 1.f;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Skateboard")
+	float MinJumpSpeed = 400.f;
+
 	float CurrentAcceleration = 0.f;
 
 	bool bIsAccelerating = false;
+	bool bIsSlowingDown = false;
 	bool bIsMovingForwardPressed = false;
+	bool bIsJumping = false;
 };
