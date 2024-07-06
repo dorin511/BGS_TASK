@@ -25,7 +25,9 @@ void USGAnimInstance::UpdatePlayerStats()
 
 	Speed = Player->GetVelocity().Size();
 
-	bIsJumping = Player->IsJumping();
+	bStartJumpAnim = Player->GetStartJumpAnim();
+
+	bIsJumping = Player->GetMovementComponent()->IsFalling() || bStartJumpAnim;
 
 	bIsMovingForwardPressed = Player->IsMovingForwardPressed();
 }

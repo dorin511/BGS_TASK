@@ -10,5 +10,5 @@ void USGEndJumpAnimNotify::Notify(USkeletalMeshComponent* meshComp, UAnimSequenc
 
 	if (!player) return;
 
-	player->EndJumping();
+	player->StopJumping();
 }

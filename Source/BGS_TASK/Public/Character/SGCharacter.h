@@ -6,9 +6,9 @@
 #include "GameFramework/Character.h"
 #include "SGCharacter.generated.h"
 
-class ASGSkateboard;
 class USpringArmComponent;
 class UCameraComponent;
+class USphereComponent;
 
 UCLASS()
 class BGS_TASK_API ASGCharacter : public ACharacter
@@ -26,17 +26,23 @@ public:
 
 	void SetIsAccelerating(bool bValue) { bIsAccelerating = bValue; }
 
-	bool IsJumping() const { return bIsJumping; }
-	void EndJumping();
+	virtual void Jump() override;
+	virtual void StopJumping() override;
+
+	bool GetStartJumpAnim() const { return bStartJumpAnim; }
 
 protected:
 	virtual void BeginPlay() override;
 
 	void MoveForward(float amount);
 	void Turn(float amount);
-	void Jump();
+	
+	void JumpButtonPressed();
 
 	void UpdateMovementSpeed(float deltaTime);
+
+	UFUNCTION()
+	void OnSphereBeginOverlap(UPrimitiveComponent* overlappedComponent, AActor* otherActor, UPrimitiveComponent* otherComp, int32 otherBodyIndex, bool bFromSweep, const FHitResult& sweepResult);
 
 protected:
 	UPROPERTY(VisibleAnywhere)
@@ -47,6 +53,9 @@ protected:
 
 	UPROPERTY(VisibleAnywhere)
 	UStaticMeshComponent* SkateComponent = nullptr;
+
+	UPROPERTY(VisibleAnywhere)
+	USphereComponent* SphereComponent = nullptr;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Skateboard")
 	FName JumpAttachSocketName;
@@ -63,10 +72,18 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Skateboard")
 	float MinJumpSpeed = 400.f;
 
+	UPROPERTY(EditDefaultsOnly, Category = "Skateboard")
+	float JumpCooldown = 1.f;
+
+	float TimeFromLastJump = 1.f;
 	float CurrentAcceleration = 0.f;
+	float ZLocOnStartJump = 0.f;
 
 	bool bIsAccelerating = false;
 	bool bIsSlowingDown = false;
 	bool bIsMovingForwardPressed = false;
+	bool bStartJumpAnim = false;
 	bool bIsJumping = false;
+
+	FVector SkateRelativeLoc;
 };

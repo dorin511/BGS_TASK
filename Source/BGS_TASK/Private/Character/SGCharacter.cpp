@@ -5,6 +5,7 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/PawnMovementComponent.h"
+#include "Components/SphereComponent.h"
 
 ASGCharacter::ASGCharacter()
 {
@@ -18,11 +19,18 @@ ASGCharacter::ASGCharacter()
 
 	SkateComponent = CreateDefaultSubobject<UStaticMeshComponent>("SkateComponent");
 	SkateComponent->SetupAttachment(GetMesh());
+
+	SphereComponent = CreateDefaultSubobject<USphereComponent>("SphereComponent");
+	SphereComponent->SetupAttachment(RootComponent);
 }
 
 void ASGCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+
+	SkateRelativeLoc = SkateComponent->GetRelativeLocation();
+
+	SphereComponent->OnComponentBeginOverlap.AddDynamic(this, &ASGCharacter::OnSphereBeginOverlap);
 }
 
 void ASGCharacter::Tick(float deltaTime)
@@ -30,6 +38,13 @@ void ASGCharacter::Tick(float deltaTime)
 	Super::Tick(deltaTime);
 
 	UpdateMovementSpeed(deltaTime);
+
+	if (!bIsJumping && TimeFromLastJump < JumpCooldown)
+	{
+		TimeFromLastJump += deltaTime;
+	}
+
+	GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Black, FString::Printf(TEXT("%d"), bPressedJump), false);
 }
 
 void ASGCharacter::SetupPlayerInputComponent(UInputComponent* playerInputComponent)
@@ -38,7 +53,7 @@ void ASGCharacter::SetupPlayerInputComponent(UInputComponent* playerInputCompone
 
 	playerInputComponent->BindAxis("Forward", this, &ASGCharacter::MoveForward);
 	playerInputComponent->BindAxis("Turn", this, &ASGCharacter::Turn);
-	playerInputComponent->BindAction("Jump", EInputEvent::IE_Pressed, this, &ASGCharacter::Jump);
+	playerInputComponent->BindAction("Jump", EInputEvent::IE_Pressed, this, &ASGCharacter::JumpButtonPressed);
 }
 
 void ASGCharacter::MoveForward(float amount)
@@ -56,21 +71,35 @@ void ASGCharacter::Turn(float amount)
 	AddControllerYawInput(amount);
 }
 
-void ASGCharacter::Jump()
+void ASGCharacter::JumpButtonPressed()
 {
-	if (MinJumpSpeed > GetVelocity().Size() || bIsJumping) return;
+	if (MinJumpSpeed > GetVelocity().Size() || TimeFromLastJump < JumpCooldown) return;
 
+	bStartJumpAnim = true;
 	bIsJumping = true;
-	bIsMovingForwardPressed = false;
-	bIsSlowingDown = false;
-
-	SkateComponent->AttachToComponent(GetMesh(), FAttachmentTransformRules::KeepRelativeTransform, JumpAttachSocketName);
 }
 
-void ASGCharacter::EndJumping()
+void ASGCharacter::Jump()
 {
-	bIsJumping = false;
+	bIsMovingForwardPressed = false;
+	bIsSlowingDown = false;
+	bStartJumpAnim = false;
+
+	TimeFromLastJump = 0.f;
+
+	SkateComponent->AttachToComponent(GetMesh(), FAttachmentTransformRules::KeepRelativeTransform, JumpAttachSocketName);
+
+	Super::Jump();
+}
+
+void ASGCharacter::StopJumping()
+{
 	SkateComponent->AttachToComponent(GetMesh(), FAttachmentTransformRules::KeepRelativeTransform);
+	SkateComponent->SetRelativeLocation(SkateRelativeLoc);
+
+	bIsJumping = false;
+
+	Super::StopJumping();
 }
 
 void ASGCharacter::UpdateMovementSpeed(float deltaTime)
@@ -84,4 +113,11 @@ void ASGCharacter::UpdateMovementSpeed(float deltaTime)
 
 	if (bIsAccelerating) bIsAccelerating = false;
 	AddMovementInput(GetActorForwardVector(), CurrentAcceleration);
+}
+
+void ASGCharacter::OnSphereBeginOverlap(UPrimitiveComponent* overlappedComponent, AActor* otherActor, UPrimitiveComponent* otherComp, int32 otherBodyIndex, bool bFromSweep, const FHitResult& sweepResult)
+{
+	if (otherActor == this) return;
+
+	CurrentAcceleration = 0.f;
 }

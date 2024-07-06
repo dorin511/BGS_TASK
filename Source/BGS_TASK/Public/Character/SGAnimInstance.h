@@ -35,5 +35,8 @@ protected:
 	bool bIsJumping = false;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Movement")
+	bool bStartJumpAnim = false;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Movement")
 	bool bIsMovingForwardPressed = false;
 };
