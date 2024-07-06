@@ -135,5 +135,5 @@ void ASGCharacter::OnJumpDetectionCapsuleOverlap(UPrimitiveComponent* overlapped
 
 	GameScore += JumpScore;
 
-	if (ScoreWidget) ScoreWidget->UpdateScore(GameScore);
+	ScoreWidget->UpdateScore(GameScore);
 }

@@ -9,6 +9,7 @@
 class USpringArmComponent;
 class UCameraComponent;
 class USphereComponent;
+class USGScoreWidget;
 
 UCLASS()
 class BGS_TASK_API ASGCharacter : public ACharacter
@@ -83,6 +84,12 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Skateboard")
 	int32 JumpScore = 100;
+
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	TSubclassOf<USGScoreWidget> ScoreWidgetClass;
+
+	UPROPERTY()
+	USGScoreWidget* ScoreWidget = nullptr;
 
 	float TimeFromLastJump = 1.f;
 	float CurrentAcceleration = 0.f;
