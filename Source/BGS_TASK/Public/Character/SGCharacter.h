@@ -43,6 +43,9 @@ protected:
 
 	UFUNCTION()
 	void OnSphereBeginOverlap(UPrimitiveComponent* overlappedComponent, AActor* otherActor, UPrimitiveComponent* otherComp, int32 otherBodyIndex, bool bFromSweep, const FHitResult& sweepResult);
+	
+	UFUNCTION()
+	void OnJumpDetectionCapsuleOverlap(UPrimitiveComponent* overlappedComponent, AActor* otherActor, UPrimitiveComponent* otherComp, int32 otherBodyIndex, bool bFromSweep, const FHitResult& sweepResult);
 
 protected:
 	UPROPERTY(VisibleAnywhere)
@@ -56,6 +59,9 @@ protected:
 
 	UPROPERTY(VisibleAnywhere)
 	USphereComponent* SphereComponent = nullptr;
+
+	UPROPERTY(VisibleAnywhere)
+	UCapsuleComponent* JumpDetectionCapsule = nullptr;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Skateboard")
 	FName JumpAttachSocketName;
@@ -75,6 +81,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Skateboard")
 	float JumpCooldown = 1.f;
 
+	UPROPERTY(EditDefaultsOnly, Category = "Skateboard")
+	int32 JumpScore = 100;
+
 	float TimeFromLastJump = 1.f;
 	float CurrentAcceleration = 0.f;
 	float ZLocOnStartJump = 0.f;
@@ -84,6 +93,8 @@ protected:
 	bool bIsMovingForwardPressed = false;
 	bool bStartJumpAnim = false;
 	bool bIsJumping = false;
+
+	int32 GameScore = 0;
 
 	FVector SkateRelativeLoc;
 };

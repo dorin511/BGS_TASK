@@ -6,6 +6,7 @@
 #include "Camera/CameraComponent.h"
 #include "GameFramework/PawnMovementComponent.h"
 #include "Components/SphereComponent.h"
+#include "Components/CapsuleComponent.h"
 
 ASGCharacter::ASGCharacter()
 {
@@ -22,6 +23,9 @@ ASGCharacter::ASGCharacter()
 
 	SphereComponent = CreateDefaultSubobject<USphereComponent>("SphereComponent");
 	SphereComponent->SetupAttachment(RootComponent);
+	
+	JumpDetectionCapsule = CreateDefaultSubobject<UCapsuleComponent>("JumpDetectionCapsule");
+	JumpDetectionCapsule->SetupAttachment(RootComponent);
 }
 
 void ASGCharacter::BeginPlay()
@@ -31,6 +35,7 @@ void ASGCharacter::BeginPlay()
 	SkateRelativeLoc = SkateComponent->GetRelativeLocation();
 
 	SphereComponent->OnComponentBeginOverlap.AddDynamic(this, &ASGCharacter::OnSphereBeginOverlap);
+	JumpDetectionCapsule->OnComponentBeginOverlap.AddDynamic(this, &ASGCharacter::OnJumpDetectionCapsuleOverlap);
 }
 
 void ASGCharacter::Tick(float deltaTime)
@@ -43,8 +48,6 @@ void ASGCharacter::Tick(float deltaTime)
 	{
 		TimeFromLastJump += deltaTime;
 	}
-
-	GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Black, FString::Printf(TEXT("%d"), bPressedJump), false);
 }
 
 void ASGCharacter::SetupPlayerInputComponent(UInputComponent* playerInputComponent)
@@ -120,4 +123,13 @@ void ASGCharacter::OnSphereBeginOverlap(UPrimitiveComponent* overlappedComponent
 	if (otherActor == this) return;
 
 	CurrentAcceleration = 0.f;
+}
+
+void ASGCharacter::OnJumpDetectionCapsuleOverlap(UPrimitiveComponent* overlappedComponent, AActor* otherActor, UPrimitiveComponent* otherComp, int32 otherBodyIndex, bool bFromSweep, const FHitResult& sweepResult)
+{
+	if (otherActor == this || !bIsJumping) return;
+
+	GameScore += JumpScore;
+
+	GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Black, FString::Printf(TEXT("%d"), GameScore), false);
 }
